@@ -26,10 +26,7 @@ Vue.component("product", {
             </div>
             <div class=" flex">
                 <button @click="addToCart" :disabled="!inStock" :class="{ disabledButton: !inStock }">Add to Cart</button>
-                <button @click="removeFromCart">Remove from Cart</button>
-            </div>
-            <div class="cart">
-                <p>Cart({{cart}})</p>
+                <!--<button @click="removeFromCart">Remove from Cart</button>-->
             </div>
         </div>
     </div>
@@ -40,7 +37,6 @@ Vue.component("product", {
       product: "Socks",
       selectedVariant: 0,
       altText: "A pair of socks",
-      inventory: 100,
       onSale: true,
       details: ["80% Cotton", "20% polyester", "Gender-neutral"],
       variants: [
@@ -58,15 +54,11 @@ Vue.component("product", {
         },
       ],
       sizes: ["38", "39", "40", "41"],
-      cart: 0,
     };
   },
   methods: {
     addToCart() {
-      this.cart += 1;
-    },
-    removeFromCart() {
-      this.cart -= 1;
+      this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
     },
     UpdateProduct(index) {
       this.selectedVariant = index;
@@ -124,5 +116,14 @@ var app = new Vue({
   el: "#app",
   data: {
     premium: true,
+    cart: [],
+  },
+  methods: {
+    updateCart(id) {
+      this.cart.push(id);
+    },
+    // removeFromCart() {
+    //   this.cart -= 1;
+    // },
   },
 });
