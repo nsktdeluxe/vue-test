@@ -26,7 +26,7 @@ Vue.component("product", {
             </div>
             <div class=" flex">
                 <button @click="addToCart" :disabled="!inStock" :class="{ disabledButton: !inStock }">Add to Cart</button>
-                <!--<button @click="removeFromCart">Remove from Cart</button>-->
+                <button @click="removeFromCart">Remove from Cart</button>
             </div>
         </div>
     </div>
@@ -39,26 +39,32 @@ Vue.component("product", {
       altText: "A pair of socks",
       onSale: true,
       details: ["80% Cotton", "20% polyester", "Gender-neutral"],
+      sizes: ["38", "39", "40", "41"],
       variants: [
         {
           variantId: 2234,
+          variantQuantity: 150,
           variantColor: "green",
           variantImage: "./assets/vmSocks-green.jpeg",
-          variantQuantity: 100,
         },
         {
           variantId: 2235,
+          variantQuantity: 0,
           variantColor: "blue",
           variantImage: "./assets/vmSocks-blue.jpeg",
-          variantQuantity: 0,
         },
       ],
-      sizes: ["38", "39", "40", "41"],
     };
   },
   methods: {
     addToCart() {
       this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
+    },
+    removeFromCart() {
+      this.$emit(
+        "remove-from-cart",
+        this.variants[this.selectedVariant].variantId
+      );
     },
     UpdateProduct(index) {
       this.selectedVariant = index;
@@ -76,6 +82,7 @@ Vue.component("product", {
       return this.variants[this.selectedVariant].variantImage;
     },
     inStock() {
+      //return this.variants[this.selectedVariant].variantQuantity;
       return this.variants[this.selectedVariant].variantQuantity;
     },
     sale() {
@@ -112,6 +119,7 @@ Vue.component("product-details", {
   //     };
   //   },
 });
+/** ルートインスタンス */
 var app = new Vue({
   el: "#app",
   data: {
@@ -122,8 +130,15 @@ var app = new Vue({
     updateCart(id) {
       this.cart.push(id);
     },
-    // removeFromCart() {
-    //   this.cart -= 1;
-    // },
+    removeFromCart(id) {
+      // this.cart.shift(id);
+      // ↓solution
+      // 思ってたんと違う
+      for (var i = this.cart.length - 1; i >= 0; i--) {
+        if (this.cart[i] === id) {
+          this.cart.splice(i, 1);
+        }
+      }
+    },
   },
 });
