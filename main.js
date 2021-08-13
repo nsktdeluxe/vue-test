@@ -29,6 +29,19 @@ Vue.component("product", {
                 <button @click="removeFromCart">Remove from Cart</button>
             </div>
         </div>
+        <div>
+          <h2>Reviews</h2>
+          <p v-if="!reviews.length">There are no reviews yet.</p>
+          <ul>
+            <li v-for="(review,index) in reviews" :key="index">
+              <p>{{ review.name }}</p>
+              <p>Rating: {{ review.rating }}</p>
+              <p>{{ review.review }}</p>
+              <p>Recommend: {{ review.recommend }}</p>
+            </li>
+          </ul>
+        </div>
+        <product-review @review-submitted="addReview"></product-review>
     </div>
   `,
   data() {
@@ -54,6 +67,7 @@ Vue.component("product", {
           variantImage: "./assets/vmSocks-blue.jpeg",
         },
       ],
+      reviews: [],
     };
   },
   methods: {
@@ -65,6 +79,9 @@ Vue.component("product", {
         "remove-from-cart",
         this.variants[this.selectedVariant].variantId
       );
+    },
+    addReview(productReview) {
+      this.reviews.push(productReview);
     },
     UpdateProduct(index) {
       this.selectedVariant = index;
@@ -99,6 +116,10 @@ Vue.component("product", {
     },
   },
 });
+/**
+ * product-details コンポーネント
+ * nested within our `product` component.
+ */
 Vue.component("product-details", {
   props: {
     details: {
@@ -118,6 +139,75 @@ Vue.component("product-details", {
   //       details: ["80% Cotton", "20% polyester", "Gender-neutral"],
   //     };
   //   },
+});
+/**
+ * product-review コンポーネント
+ * nested within our `product` component.
+ */
+Vue.component("product-review", {
+  template: `
+    <!--<input v-model="name">-->
+    <form class="review-form" @submit.prevent="onSubmit">
+      <p>
+        <label for="name">Name:</label>
+        <input id="name" v-model="name" placeholder="name">
+      </p>
+      <p>
+        <label for="review">Review:</label>
+        <textarea id="review" v-model="review"></textarea>
+      </p>
+      <p>
+        <label for="rating">Rating:</label>
+        <select id="rating" v-model.number="rating">
+          <option>5</option>
+          <option>4</option>
+          <option>3</option>
+          <option>2</option>
+          <option>1</option>
+        </select>
+      </p>
+      <p>
+      <p>Would you recommend this product?</p>
+        <label for="recommend">Yes<input type="radio" v-model="recommend" value="Yes" checked></label>
+        <label for="recommend">No<input type="radio" v-model="recommend" value="No"></label>
+      </p>
+      <p>
+        <input type="submit" value="Submit">
+      </p>
+    </form>
+  `,
+  data() {
+    return {
+      name: null,
+      review: null,
+      rating: null,
+      recommend: null,
+      errors: [],
+    };
+  },
+  methods: {
+    onSubmit() {
+      this.errors = [];
+      if (this.name && this.review && this.rating && this.recommend) {
+        let productReview = {
+          name: this.name,
+          review: this.review,
+          rating: this.rating,
+          recommend: this.recommend,
+        };
+        this.$emit("review-submitted", productReview);
+        this.name = null;
+        this.review = null;
+        this.rating = null;
+        this.recommend = null;
+      } else {
+        if (!this.name) this.errors.push("Name required.");
+        if (!this.review) this.errors.push("Review required.");
+        if (!this.rating) this.errors.push("Rating required.");
+        if (!this.recommend) this.errors.push("Recommend required.");
+      }
+    },
+  },
 });
 /** ルートインスタンス */
 var app = new Vue({
