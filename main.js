@@ -1,3 +1,5 @@
+var eventBus = new Vue();
+
 Vue.component("product", {
   props: {
     premium: {
@@ -14,9 +16,8 @@ Vue.component("product", {
             <h1>{{ title }}</h1>
             <p v-if="inStock">In Stock</p>
             <p v-else :class="{ lineThrough : !inStock}">Out of Stock</p>
-            <p>Shipping: {{ shipping }}</p>
+            <info-tabs :shipping="shipping" :details="details"></info-tabs>
             <p v-if="onSale">{{ sale }}</p>
-            <product-details :details="details"></product-details>
             <p>sizes:</p>
             <ul>
                 <li v-for="size in sizes">{{ size }}</li>
@@ -29,19 +30,7 @@ Vue.component("product", {
                 <button @click="removeFromCart">Remove from Cart</button>
             </div>
         </div>
-        <div>
-          <h2>Reviews</h2>
-          <p v-if="!reviews.length">There are no reviews yet.</p>
-          <ul>
-            <li v-for="(review,index) in reviews" :key="index">
-              <p>{{ review.name }}</p>
-              <p>Rating: {{ review.rating }}</p>
-              <p>{{ review.review }}</p>
-              <p>Recommend: {{ review.recommend }}</p>
-            </li>
-          </ul>
-        </div>
-        <product-review @review-submitted="addReview"></product-review>
+        <product-tabs :reviews="reviews"></product-tabs>
     </div>
   `,
   data() {
@@ -80,9 +69,6 @@ Vue.component("product", {
         this.variants[this.selectedVariant].variantId
       );
     },
-    addReview(productReview) {
-      this.reviews.push(productReview);
-    },
     UpdateProduct(index) {
       this.selectedVariant = index;
       console.log(index);
@@ -114,31 +100,12 @@ Vue.component("product", {
       }
       return 2.99;
     },
-  },
-});
-/**
- * product-details コンポーネント
- * nested within our `product` component.
- */
-Vue.component("product-details", {
-  props: {
-    details: {
-      type: Array,
-      required: true,
+    mounted() {
+      eventBus.$on("review-submitted", (productReview) => {
+        this.reviews.push(productReview);
+      });
     },
   },
-  // solution
-  template: `
-    <ul>
-      <li v-for="detail in details">{{ detail }}</li>
-    </ul>
-  `,
-  //私の解答(エラー)
-  //   data() {
-  //     return {
-  //       details: ["80% Cotton", "20% polyester", "Gender-neutral"],
-  //     };
-  //   },
 });
 /**
  * product-review コンポーネント
@@ -146,7 +113,6 @@ Vue.component("product-details", {
  */
 Vue.component("product-review", {
   template: `
-    <!--<input v-model="name">-->
     <form class="review-form" @submit.prevent="onSubmit">
       <p>
         <label for="name">Name:</label>
@@ -158,7 +124,7 @@ Vue.component("product-review", {
       </p>
       <p>
         <label for="rating">Rating:</label>
-        <select id="rating" v-model.number="rating">
+        <select class="rating" v-model.number="rating">
           <option>5</option>
           <option>4</option>
           <option>3</option>
@@ -195,7 +161,7 @@ Vue.component("product-review", {
           rating: this.rating,
           recommend: this.recommend,
         };
-        this.$emit("review-submitted", productReview);
+        eventBus.$emit("review-submitted", productReview);
         this.name = null;
         this.review = null;
         this.rating = null;
@@ -206,6 +172,91 @@ Vue.component("product-review", {
         if (!this.rating) this.errors.push("Rating required.");
         if (!this.recommend) this.errors.push("Recommend required.");
       }
+    },
+  },
+});
+/**
+ * product-tabs (レビュー入力／表示)
+ * レビューを submit するとその瞬間に data が消えてしまい Reviews タブで表示できない
+ */
+Vue.component("product-tabs", {
+  props: {
+    reviews: {
+      type: Array,
+      required: true,
+    },
+  },
+  template: `
+    <div>
+      <div>
+        <span class="tab"
+            :class="{ activeTab: selectedTab === tab }"
+            v-for="(tab,index) in tabs" 
+            :key="index"
+            @click="selectedTab = tab"
+            >{{ tab }}</span>
+      </div>
+      <div v-show="selectedTab === 'Reviews'">
+        <p v-if="!reviews.length">There are no reviews yet.</p>
+        <ul v-else>
+          <li v-for="review in reviews">
+            <p>{{ review.name }}</p>
+            <p>Rating: {{ review.rating }}</p>
+            <p>{{ review.review }}</p>
+            <p>Recommend: {{ review.recommend }}</p>
+          </li>
+        </ul>
+      </div>
+      <div v-show="selectedTab === 'Make a Review'">
+        <product-review></product-review>
+      </div>
+    </div>
+    `,
+  data() {
+    return {
+      tabs: ["Reviews", "Make a Review"],
+      selectedTab: "Reviews",
+    };
+  },
+});
+/**
+ * info-tabs (Shipping, Details)
+ * 親の product コンポーネントで何故か info-tabs を認識できない
+ */
+Vue.component("info-tabs", {
+  props: {
+    shipping: {
+      required: true,
+    },
+    details: {
+      type: Array,
+      required: true,
+    },
+    template: `
+    <div>
+      <ul>
+        <span class="tab"
+          :class="{ activeTab: selectedTab === tab }"
+          v-for="(tab,index) in tabs" 
+          :key="tab"
+          @click="selectedTab = tab"
+        >{{ tab }}</span>
+      </ul>
+      <div v-show="selectedTab === 'Shipping'">
+        <p>Shipping: {{ shipping }}</p>
+      </div>
+      <div v-show="selectedTab === 'Details'">
+        <ul>
+          <li v-for="detail in details">{{ detail }}</li>
+        </ul>
+      </div>
+    </div>
+    `,
+    data() {
+      return {
+        tabs: ["Shipping", "Details"],
+        selectedTab: "Shipping",
+      };
     },
   },
 });
